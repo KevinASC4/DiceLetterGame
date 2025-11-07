@@ -18,12 +18,12 @@ let lettersOwned = [];
 let usedWords = [];
 let currentRollLetters = []; 
 let diceFaces = [
-  "assets/dice/32x/front-side-1.png",
-  "assets/dice/32x/front-2.png",
-  "assets/dice/32x/front-3.png",
-  "assets/dice/32x/front-side-4.png",
-  "assets/dice/32x/front-5.png",
-  "assets/dice/32x/front-6.png"
+  "public/assets/dice/32x/front-side-1.png",
+  "public/assets/dice/32x/front-2.png",
+  "public/assets/dice/32x/front-3.png",
+  "public/assets/dice/32x/front-side-4.png",
+  "public/assets/dice/32x/front-5.png",
+  "public/assets/dice/32x/front-6.png"
 ];
 
 // ===== Letter Pools =====
