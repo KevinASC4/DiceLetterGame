@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dice Letter Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Dice Letter Game</h1>
+    </header>
+
+    <div class="main-content">
+      <div class="game-section">
+        <div class="dice-section">
+          <img id="dice" src="assets/dice/32x/front-side-1.png" alt="Dice">
+          <button id="roll-dice">Roll Dice</button>
+        </div>
+
+        <div class="coins-score">
+          Coins: <span id="coins">180</span> | Score: <span id="score">0</span>
+        </div>
+
+        <div class="letter-bank-section">
+          <h3>Current Roll Letters</h3>
+          <div id="letter-bank"></div>
+        </div>
+
+        <div class="letter-bank-section">
+          <h3>Your Letters</h3>
+          <div id="owned-letters"></div>
+        </div>
+
+        <div class="word-builder-section">
+          <h3>Build Word</h3>
+          <div id="word-builder"></div>
+          <button id="check-word-btn">Check Word</button>
+        </div>
+
+        <!-- Notification for invalid words appears here -->
+        <div id="word-notification" class="notification"></div>
+        <!-- at the bottom of game-section -->
+        <div id="notification" class="notification"></div>
+        <div class="used-words-section">
+          <h3>Used Words</h3>
+          <div id="used-word-bank"></div>
+        </div>
+
+        <button id="finish-game-btn">Finish Game & Export CSV</button>
+
+      </div>
+
+      <div class="rules-section">
+        <h2>How to Play</h2>
+        <p>1. Roll the dice to get a group of letters. Dice 1 = worst letters, 5 = best letters, 6 = choose freely.</p>
+        <p>2. Click letters to buy them, cost shown in coins (like Scrabble letter values).</p>
+        <p>3. Drag bought letters into the word builder to form words.</p>
+        <p>4. Check words to gain score. Used letters are removed from your bank unless dragged back.</p>
+        <p>5. You can create multiple words each roll.</p>
+        <p>6. Finish the game to export your words and scores as CSV.</p>
+      
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
