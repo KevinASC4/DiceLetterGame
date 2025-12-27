@@ -1,70 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>BuyWord Game</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Dropbox Saver -->
+  <script src="https://www.dropbox.com/static/api/2/dropins.js" 
+          id="dropboxjs" 
+          data-app-key="1608ikab13rcjle"></script>
 </head>
 <body>
 
-  <header>
-    <h1>BuyWord Game</h1>
-    <a href="tutorial.html" target="_blank" class="how-to-play-btn">How to Play</a>
-  </header>
+<!-- ===== PLAYER SETUP ===== -->
+<section class="player-setup">
+  <input id="player-name-input" placeholder="Your Name" />
+  <input id="player-class-input" placeholder="Class (ex: DATA101)" />
+  <button id="start-game-btn">Start Game</button>
+  <button id="exportBtn">📤 Export Game Log to Dropbox</button>
+</section>
 
-  <!-- Player Info -->
-  <section class="player-info">
-    <label>
-      Name:
-      <input type="text" id="player-name" placeholder="First Last">
-    </label>
-    <label>
-      Semester:
-      <input type="text" id="player-semester" placeholder="FALL24">
-    </label>
+<!-- ===== TOP BAR ===== -->
+<header class="top-bar">
+  <div>
+    <div><strong>Player ID:</strong> <span id="player-id">—</span></div>
+    <div>Time Start: <span id="time-start">—</span></div>
+    <div>Time Elapsed: <span id="time-elapsed">0:00</span></div>
+  </div>
+
+  <div class="wallet-box">
+    Wallet: $<span id="coins">200</span>
+  </div>
+</header>
+
+<!-- ===== MAIN GRID ===== -->
+<main class="main-grid">
+
+  <section class="price-grid">
+    <h3>Letter Prices</h3>
+    <div id="letter-price-grid" class="alphabet-grid"></div>
   </section>
 
-  <main class="game-container">
+  <section class="offer-section">
+    <img id="dice" src="assets/dice/32x/front-side-1.png" />
+    <div id="current-roll" class="tile-row"></div>
+    <div id="total-price"></div>
+    <button id="roll-dice">Roll Dice</button>
+    <button id="buy-tiles-btn">Buy Letters</button>
+  </section>
 
-    <!-- Dice Roll Section -->
-    <section class="dice-section">
-      <h2>Roll Dice</h2>
-      <img id="dice" src="assets/dice/32x/front-side-1.png" alt="Dice">
-      <button id="roll-dice">Roll Dice</button>
+  <section class="player-section">
+    <h3>Letters Possessed</h3>
+    <div id="owned-tiles" class="tile-row"></div>
 
-      <p>Tiles drawn:</p>
-      <div id="current-roll"></div>
+    <h4>Wildcards (1 point)</h4>
+    <div id="wild-tiles" class="tile-row"></div>
 
-      <button id="buy-tiles-btn">Buy All Tiles</button>
-      <button id="discard-tiles-btn">Discard All Tiles</button>
-    </section>
+    <h3>Word Builder</h3>
+    <div id="word-builder" class="tile-row drop-zone"></div>
+    <div>You will win: <strong>$<span id="potential-win">0</span></strong></div>
 
-    <!-- Player Tiles Section -->
-    <section class="bank-section">
-      <h2>Your Tiles</h2>
-      <p>Coins: $<span id="coins">200</span></p>
-      <div id="owned-tiles"></div>
+    <button id="check-word-btn">Sell Word</button>
+  </section>
 
-      <p><strong>Wild Tiles:</strong></p>
-      <div id="wild-tiles"></div>
-    </section>
+</main>
 
-    <!-- Word Builder Section -->
-    <section class="word-section">
-      <h2>Word Builder</h2>
-      <div id="word-builder" class="builder"></div>
-      <button id="check-word-btn">Sell Word</button>
+<div id="notification" class="notification"></div>
 
-      <h3>Sold Words:</h3>
-      <div id="used-word-bank"></div>
+<!-- JS Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="script.js"></script>
 
-      <button id="finish-game-btn">Finish & Export CSV</button>
-    </section>
-
-  </main>
-
-  <div id="notification" class="notification"></div>
-
-  <script src="script.js"></script>
 </body>
 </html>

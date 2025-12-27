@@ -1,257 +1,198 @@
-/* ===== Global Styles ===== */
+* { box-sizing: border-box; }
+
 body {
-  font-family: Arial, sans-serif;
-  background-color: #e0f5ff;
-  color: #003366;
   margin: 0;
-  padding: 0;
+  font-family: Arial, sans-serif;
+  background: #cfdde3;
 }
 
-header {
-  background-color: #007acc;
-  color: white;
+/* ===== TOP BAR ===== */
+.top-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: #8fa9b4;
   padding: 15px;
-  text-align: center;
 }
 
-header a {
-  color: white;
-  text-decoration: none;
-  margin-left: 20px;
-  font-weight: bold;
-}
-
-h2, h3 {
-  margin-top: 0;
-}
-
-/* ===== Player Info Center Alignment ===== */
-.player-info {
-  display: flex;
-  flex-direction: column; /* Stack name and semester vertically */
-  justify-content: center; /* Vertical centering within parent */
-  align-items: center; /* Horizontal centering */
-  gap: 15px; /* Space between inputs */
-  padding: 20px;
-  background-color: #cce6ff;
-  border-bottom: 2px solid #007acc;
-  width: 100%;
-  box-sizing: border-box;
-  margin-bottom: 15px;
-}
-
-.player-info label {
+.top-left, .top-center, .top-right {
   display: flex;
   flex-direction: column;
-  font-weight: bold;
-  color: #003366;
+  gap: 5px;
+}
+
+.round-box, .wallet-box {
+  background: #f4f6f8;
+  padding: 10px;
+  border-radius: 6px;
   text-align: center;
 }
 
-.player-info input {
-  padding: 7px 12px;
-  border-radius: 5px;
-  border: 1px solid #003366;
+.status {
   margin-top: 5px;
-  font-size: 16px;
-  width: 200px;
-  text-align: center;
+  font-size: 14px;
+  background: #ddd;
+  padding: 3px;
 }
 
-/* ===== Game Container ===== */
-.game-container {
-  display: flex;
-  justify-content: center;
+/* ===== MAIN GRID ===== */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.2fr;
   gap: 20px;
-  flex-wrap: wrap;
   padding: 20px;
 }
 
-/* ===== Sections ===== */
-section {
-  background-color: #cce6ff;
+/* ===== PRICE GRID ===== */
+.price-grid {
+  background: #e6eef3;
   padding: 15px;
-  border-radius: 10px;
-  width: 300px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  border-radius: 6px;
 }
 
-section h2, section h3 {
+.alphabet-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+/* ===== OFFER SECTION ===== */
+.offer-section {
+  background: #d6d230;
+  padding: 15px;
+  border-radius: 6px;
   text-align: center;
 }
 
-/* ===== Dice Section ===== */
-.dice-section img {
-  width: 60px;
-  height: 60px;
-  margin-bottom: 10px;
-}
-
-.dice-section button {
-  margin: 5px 0;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 5px;
-  background-color: #007acc;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.dice-section button:hover {
-  background-color: #005ea3;
-}
-
-/* ===== Tiles ===== */
-.tile, .wild-tile {
-  display: inline-block;
-  width: 40px;
-  height: 40px;
-  line-height: 40px;
-  text-align: center;
-  background-color: white;
-  border: 2px solid #003366;
-  border-radius: 5px;
-  margin: 2px;
-  cursor: pointer;
-  font-weight: bold;
+.price-total {
+  margin: 10px 0;
   font-size: 18px;
 }
 
+/* ===== PLAYER SECTION ===== */
+.player-section {
+  background: #e6eef3;
+  padding: 15px;
+  border-radius: 6px;
+}
+
+.word-box {
+  background: #fff;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.win-text {
+  margin-top: 5px;
+}
+
+/* ===== TILES ===== */
+.tile {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 2px solid #333;
+  border-radius: 4px;
+  font-weight: bold;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.tile-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .wild-tile {
-  background-color: #ffff99;
-  font-weight: bold;
+  background: #fff7a8;
+  border: 2px dashed #333;
 }
 
-/* ===== Word Builder ===== */
-#word-builder {
-  min-height: 50px;
-  width: 100%;
-  border: 2px dashed #003366;
-  border-radius: 5px;
-  margin-bottom: 10px;
-  padding: 5px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-/* ===== Owned Tiles & Wild Tiles Containers ===== */
-#owned-tiles, #wild-tiles {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-bottom: 10px;
-}
-
-/* ===== Buttons ===== */
-.word-section button, .bank-section button {
-  margin: 5px 0;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 5px;
-  background-color: #007acc;
+/* ===== BUTTONS ===== */
+.primary-btn {
+  background: #000;
   color: white;
-  font-weight: bold;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  margin: 4px;
   cursor: pointer;
 }
 
-.word-section button:hover, .bank-section button:hover {
-  background-color: #005ea3;
+.secondary-btn {
+  background: #444;
+  color: white;
+  padding: 6px;
+  border: none;
+  border-radius: 4px;
 }
 
-/* ===== Sold Words ===== */
-#used-word-bank {
-  width: 100%;
-  background-color: #e6f2ff;
-  padding: 5px;
-  border-radius: 5px;
-  max-height: 150px;
-  overflow-y: auto;
-  margin-bottom: 10px;
+.danger-btn {
+  background: #b30000;
+  color: white;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
 }
 
-/* ===== Notifications ===== */
+/* ===== NOTIFICATION ===== */
 .notification {
   position: fixed;
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: #007acc;
+  background: #333;
   color: white;
   padding: 10px 20px;
-  border-radius: 10px;
+  border-radius: 6px;
   display: none;
-  font-weight: bold;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
 .notification.show {
   display: block;
 }
-/* ===== Header & How to Play Button ===== */
-header {
-  background-color: #007acc;
-  color: white;
-  padding: 20px;
-  text-align: center;
+.player-setup {
+  padding: 10px;
+  background: #ddd;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-}
-
-header h1 {
-  margin: 0;
-  font-size: 28px;
-}
-
-header a.how-to-play-btn {
-  display: inline-block;
-  background-color: #ffcc00;
-  color: #003366;
-  font-weight: bold;
-  font-size: 18px;
-  padding: 10px 25px;
-  border-radius: 8px;
-  text-decoration: none;
-  transition: transform 0.2s, background-color 0.2s;
-}
-
-header a.how-to-play-btn:hover {
-  background-color: #e6b800;
-  transform: scale(1.1);
-}
-
-/* ===== Player Info Center Alignment ===== */
-.player-info {
-  display: flex;
+  gap: 10px;
   justify-content: center;
-  gap: 50px;
-  align-items: center;
-  padding: 15px;
-  background-color: #cce6ff;
-  border-bottom: 2px solid #007acc;
-  margin-bottom: 15px;
 }
 
-.player-info label {
-  display: flex;
-  flex-direction: column;
-  font-weight: bold;
-  color: #003366;
-  text-align: center;
+.drop-zone {
+  min-height: 50px;
+  border: 2px dashed #333;
 }
 
-.player-info input {
-  padding: 7px 12px;
-  border-radius: 5px;
-  border: 1px solid #003366;
-  margin-top: 5px;
-  font-size: 16px;
-  width: 180px;
-  text-align: center;
+.tile {
+  cursor: grab;
 }
+
+.wild-tile {
+  background: #fff6a8;
+  border: 2px dashed #333;
+}
+
+#exportBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #222;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,.3);
+}
+
+#exportBtn:hover {
+  background: #444;
+}
+
