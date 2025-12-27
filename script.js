@@ -254,22 +254,29 @@ async function isValidWord(word) {
 function exportGameLogToDropbox() {
   if (!gameLog.length) return alert("No data");
 
-  // Create Excel workbook
+  // Convert game log to CSV
   const ws = XLSX.utils.json_to_sheet(gameLog);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Game Log");
 
-  // Write as Blob
-  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  const blob = new Blob([wbout], { type: "application/octet-stream" });
+  // Write workbook as binary string
+  const wbout = XLSX.write(wb, { bookType: "csv", type: "binary" });
 
-  // Temporary URL
-  const url = URL.createObjectURL(blob);
-  const filename = `${playerId}_BuyWord_Log.xlsx`;
+  // Convert binary string to Blob
+  function s2ab(s) {
+    const buf = new ArrayBuffer(s.length);
+    const view = new Uint8Array(buf);
+    for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+    return buf;
+  }
 
-  // Dropbox Saver
-  Dropbox.save(url, filename);
+  const blob = new Blob([s2ab(wbout)], { type: "text/csv" });
+  const file = new File([blob], `${playerId}_BuyWord_Log.csv`, { type: "text/csv" });
+
+  // Dropbox Saver expects an array of files
+  Dropbox.save({ files: [file] }, { success: () => alert("Saved to Dropbox!") });
 }
+
 
 // ===== EXPORT BUTTON =====
 document.getElementById("exportBtn").onclick = exportGameLogToDropbox;
