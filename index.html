@@ -4,20 +4,16 @@
   <meta charset="UTF-8" />
   <title>BuyWord Game</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
 </head>
 <body>
 
-<!-- ===== PLAYER SETUP ===== -->
 <section class="player-setup">
   <input id="player-name-input" placeholder="Your Name" />
   <input id="player-class-input" placeholder="Class (ex: DATA101)" />
   <button id="start-game-btn">Start Game</button>
-  <button id="exportBtn">📤 Export Game Log to Dropbox</button>
+  <button id="exportBtn">📤 Export Game Log</button>
 </section>
 
-<!-- ===== TOP BAR ===== -->
 <header class="top-bar">
   <div>
     <div><strong>Player ID:</strong> <span id="player-id">—</span></div>
@@ -32,7 +28,6 @@
   <a href="tutorial.html" target="_blank" class="instructions-link">How to Play</a>
 </header>
 
-<!-- ===== MAIN GRID ===== -->
 <main class="main-grid">
 
   <section class="price-grid">
@@ -41,7 +36,6 @@
   </section>
 
   <section class="offer-section">
-    <img id="dice" src="assets/dice/32x/front-side-1.png" />
     <div id="current-roll" class="tile-row"></div>
     <div id="total-price"></div>
     <button id="roll-dice">Roll Dice</button>
@@ -52,7 +46,7 @@
     <h3>Letters Possessed</h3>
     <div id="owned-tiles" class="tile-row"></div>
 
-    <h4>Wildcards (1 point)</h4>
+    <h4>Wildcards</h4>
     <div id="wild-tiles" class="tile-row"></div>
 
     <h3>Word Builder</h3>
