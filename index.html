@@ -4,9 +4,8 @@
   <meta charset="UTF-8" />
   <title>BuyWord Game</title>
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Dropbox Saver -->
-  <script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="1608ikab13rcjle"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
 </head>
 <body>
 
@@ -30,8 +29,7 @@
     Wallet: $<span id="coins">200</span>
   </div>
 
-  <!-- How to play -->
-  <a href="instructions.html" target="_blank" class="instructions-link">How to Play</a>
+  <a href="tutorial.html" target="_blank" class="instructions-link">How to Play</a>
 </header>
 
 <!-- ===== MAIN GRID ===== -->
@@ -68,9 +66,6 @@
 
 <div id="notification" class="notification"></div>
 
-<!-- JS Libraries -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="script.js"></script>
-
 </body>
 </html>

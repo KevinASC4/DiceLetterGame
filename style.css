@@ -1,242 +1,41 @@
 * { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #cfdde3;
-}
+body { margin:0; font-family: Arial; background:#cfdde3; }
 
 /* ===== TOP BAR ===== */
 .top-bar {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  background: #8fa9b4;
-  padding: 15px;
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  background:#8fa9b4; padding:15px; align-items:center;
 }
-
-.top-left, .top-center, .top-right {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.round-box, .wallet-box {
-  background: #f4f6f8;
-  padding: 10px;
-  border-radius: 6px;
-  text-align: center;
-}
-
-.status {
-  margin-top: 5px;
-  font-size: 14px;
-  background: #ddd;
-  padding: 3px;
-}
+.wallet-box { background:#f4f6f8; padding:10px; border-radius:6px; text-align:center; }
+.instructions-link { justify-self:end; background:#222; color:white; padding:6px 10px; border-radius:5px; text-decoration:none; }
+.instructions-link:hover { background:#444; }
 
 /* ===== MAIN GRID ===== */
-.main-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr 1.2fr;
-  gap: 20px;
-  padding: 20px;
-}
+.main-grid { display:grid; grid-template-columns:1.2fr 1fr 1.2fr; gap:20px; padding:20px; }
 
 /* ===== PRICE GRID ===== */
-.price-grid {
-  background: #e6eef3;
-  padding: 15px;
-  border-radius: 6px;
-}
-
-.alphabet-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
-}
+.price-grid { background:#e6eef3; padding:15px; border-radius:6px; }
+.alphabet-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
 
 /* ===== OFFER SECTION ===== */
-.offer-section {
-  background: #d6d230;
-  padding: 15px;
-  border-radius: 6px;
-  text-align: center;
-}
-
-.price-total {
-  margin: 10px 0;
-  font-size: 18px;
-}
+.offer-section { background:#d6d230; padding:15px; border-radius:6px; text-align:center; }
 
 /* ===== PLAYER SECTION ===== */
-.player-section {
-  background: #e6eef3;
-  padding: 15px;
-  border-radius: 6px;
-}
-
-.word-box {
-  background: #fff;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 6px;
-  text-align: center;
-}
-
-.win-text {
-  margin-top: 5px;
-}
+.player-section { background:#e6eef3; padding:15px; border-radius:6px; }
 
 /* ===== TILES ===== */
-.tile {
-  width: 40px;
-  height: 40px;
-  background: white;
-  border: 2px solid #333;
-  border-radius: 4px;
-  font-weight: bold;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
+.tile { width:40px; height:40px; background:white; border:2px solid #333; border-radius:4px; display:flex; justify-content:center; align-items:center; font-weight:bold; font-size:18px; color:black; cursor:grab; }
+.tile-row { display:flex; gap:5px; flex-wrap:wrap; justify-content:center; }
+.wild-tile { background:#fff6a8; border:2px dashed #333; }
 
-.tile-row {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.wild-tile {
-  background: #fff7a8;
-  border: 2px dashed #333;
-}
+/* ===== DROP ZONE ===== */
+.drop-zone { min-height:50px; border:2px dashed #333; padding:5px; }
 
 /* ===== BUTTONS ===== */
-.primary-btn {
-  background: #000;
-  color: white;
-  padding: 8px;
-  border: none;
-  border-radius: 4px;
-  margin: 4px;
-  cursor: pointer;
-}
-
-.secondary-btn {
-  background: #444;
-  color: white;
-  padding: 6px;
-  border: none;
-  border-radius: 4px;
-}
-
-.danger-btn {
-  background: #b30000;
-  color: white;
-  padding: 8px;
-  border: none;
-  border-radius: 4px;
-}
+button { cursor:pointer; border:none; border-radius:4px; padding:6px 10px; margin:3px; background:#000; color:white; }
+button:hover { background:#444; }
 
 /* ===== NOTIFICATION ===== */
-.notification {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 6px;
-  display: none;
-}
-
-.notification.show {
-  display: block;
-}
-.player-setup {
-  padding: 10px;
-  background: #ddd;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-.drop-zone {
-  min-height: 50px;
-  border: 2px dashed #333;
-}
-
-.tile {
-  cursor: grab;
-}
-
-.wild-tile {
-  background: #fff6a8;
-  border: 2px dashed #333;
-}
-
-#exportBtn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #222;
-  color: white;
-  border: none;
-  padding: 12px 18px;
-  font-size: 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,.3);
-}
-
-#exportBtn:hover {
-  background: #444;
-}
-
-/* ===== Instructions Page ===== */
-.instructions-header {
-  background-color: #2c3e50;
-  color: #fff;
-  padding: 20px;
-  text-align: center;
-  position: relative;
-}
-
-.instructions-header h1 {
-  margin: 0;
-  font-size: 2rem;
-}
-
-.instructions-header .back-link {
-  position: absolute;
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #fff;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.instructions-header .back-link:hover {
-  text-decoration: underline;
-}
-
-.instructions {
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 0 20px;
-  font-family: Arial, sans-serif;
-  line-height: 1.6;
-}
-
-.instructions h2 {
-  color: #2c3e50;
-}
-
-.instructions ul {
-  list-style-type: disc;
-  margin-left: 20px;
-}
+.notification { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#333; color:white; padding:10px 20px; border-radius:6px; display:none; }
+.notification.show { display:block; }
