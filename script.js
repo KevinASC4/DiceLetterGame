@@ -1,3 +1,11 @@
+// ===== GOOGLE API CONFIG =====
+const CLIENT_ID = "695131078144-vbsin0iu3otnn9mfjsgv1bb9fhavjbsr.apps.googleusercontent.com";
+const DRIVE_FOLDER_ID = "1IXPNyfVbjR5jxxf5GwtZlBVy3h1H2PAY";
+const SCOPES = "https://www.googleapis.com/auth/drive.file";
+
+let tokenClient;
+let accessToken = null;
+
 // ===== DOM =====
 const ownedTilesDiv = document.getElementById("owned-tiles");
 const wildTilesDiv = document.getElementById("wild-tiles");
@@ -11,9 +19,15 @@ const potentialWinSpan = document.getElementById("potential-win");
 const nameInput = document.getElementById("player-name-input");
 const classInput = document.getElementById("player-class-input");
 const startBtn = document.getElementById("start-game-btn");
+const authBtn = document.getElementById("authBtn");
+const exportBtn = document.getElementById("exportBtn");
+const authStatus = document.getElementById("auth-status");
 const playerIdSpan = document.getElementById("player-id");
 const timeStartSpan = document.getElementById("time-start");
 const timeElapsedSpan = document.getElementById("time-elapsed");
+
+// Show export button only after auth setup
+if (exportBtn) exportBtn.style.display = "none";
 
 let coins = 200;
 let currentRoll = [];
@@ -29,6 +43,58 @@ const letterCost = {
   I:1,J:8,K:5,L:1,M:3,N:1,O:1,P:3,
   Q:10,R:1,S:1,T:1,U:1,V:4,W:4,X:8,Y:4,Z:10
 };
+
+// ===== NOTIFICATION HELPER =====
+function showNotification(message, type = "success") {
+  const notif = document.getElementById("notification");
+  notif.textContent = message;
+  notif.className = `notification show ${type}`;
+  setTimeout(() => notif.classList.remove("show"), 3000);
+}
+
+// ===== GOOGLE AUTH INIT =====
+function initGoogleAuth() {
+  gapi.load("client", async () => {
+    try {
+      await gapi.client.init({
+        clientId: CLIENT_ID,
+        scope: SCOPES,
+      });
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: handleAuthCallback,
+      });
+      if (authBtn) authBtn.style.display = "block";
+      console.log("✅ Google Drive Auth Ready");
+    } catch (err) {
+      console.error("Auth init failed:", err);
+    }
+  });
+}
+
+function handleAuthCallback(resp) {
+  if (resp.error !== undefined) {
+    throw resp;
+  }
+  accessToken = resp.access_token;
+  if (authStatus) authStatus.textContent = "✓ Google Drive Connected";
+  if (authBtn) authBtn.textContent = "🔓 Disconnect Google Drive";
+  if (exportBtn) exportBtn.style.display = "block";
+}
+
+if (authBtn) {
+  authBtn.onclick = () => {
+    if (accessToken) {
+      accessToken = null;
+      if (authStatus) authStatus.textContent = "";
+      authBtn.textContent = "🔐 Sign in to Google Drive";
+      if (exportBtn) exportBtn.style.display = "none";
+    } else {
+      if (tokenClient) tokenClient.requestAccessToken({ prompt: "consent" });
+    }
+  };
+}
 
 // ===== TILE CREATION =====
 function createTile(letter, cost) {
@@ -53,6 +119,50 @@ function logAction(action, details={}) {
     Score: Number(potentialWinSpan.textContent),
     Timestamp: new Date().toISOString()
   });
+}
+
+// ===== CSV CONVERSION =====
+function convertToCSV(data) {
+  if (!data || data.length === 0) return "";
+  const headers = Object.keys(data[0]);
+  const csvHeaders = headers.join(",");
+  const csvRows = data.map(row => 
+    headers.map(header => {
+      const value = row[header];
+      const escaped = String(value).replace(/"/g, '""');
+      return `"${escaped}"`;
+    }).join(",")
+  );
+  return [csvHeaders, ...csvRows].join("\n");
+}
+
+// ===== GOOGLE DRIVE UPLOAD =====
+async function uploadToGoogleDrive(filename, csvContent) {
+  try {
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const formData = new FormData();
+    formData.append("metadata", new Blob([JSON.stringify({
+      name: filename,
+      mimeType: "text/csv",
+      parents: [DRIVE_FOLDER_ID]
+    })], { type: "application/json" }));
+    formData.append("file", blob);
+
+    const res = await fetch(
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true",
+      {
+        method: "POST",
+        headers: new Headers({ Authorization: `Bearer ${accessToken}` }),
+        body: formData
+      }
+    );
+
+    if (!res.ok) throw new Error(await res.text());
+    return await res.json();
+  } catch (err) {
+    console.error("Upload error:", err);
+    throw err;
+  }
 }
 
 // ===== START GAME =====
@@ -171,7 +281,8 @@ document.getElementById("check-word-btn").onclick = async () => {
     if (!res.ok) throw new Error("Invalid word");
   } catch {
     logAction("INVALID_WORD",{word});
-    return alert(`"${word}" is not a valid word.`);
+    showNotification(`"${word}" is not a valid word.`, "error");
+    return;
   }
 
   const payout = Number(potentialWinSpan.textContent);
@@ -180,6 +291,7 @@ document.getElementById("check-word-btn").onclick = async () => {
   wordBuilder.innerHTML = "";
   potentialWinSpan.textContent = 0;
   logAction("SUBMIT_WORD",{word,payout});
+  showNotification(`✅ "${word}" sold for $${payout}!`, "success");
 };
 
 // ===== LETTER PRICE GRID =====
@@ -192,23 +304,33 @@ function renderLetterPriceGrid() {
 }
 renderLetterPriceGrid();
 
-// ===== GOOGLE DRIVE EXPORT =====
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbbz4uRo-Si9UyX_EtSCtk7OZN5-SBkUKSKQwS3Sbldl-zOBurLidMaymcn2zD9PdK-w/exec";
-
-document.getElementById("exportBtn").onclick = async () => {
-  if (!gameLog.length) return alert("No data to export");
+// ===== EXPORT TO GOOGLE DRIVE =====
+exportBtn.onclick = async () => {
+  if (!gameLog.length) return showNotification("No game data to export", "error");
 
   try {
-    const res = await fetch(GOOGLE_SCRIPT_URL,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ data: gameLog })
-    });
-    const result = await res.json();
-    if (res.ok && result.success) alert("Uploaded to Google Drive ✅");
-    else alert("Upload failed ❌");
-  } catch(err) {
+    exportBtn.disabled = true;
+    const filename = `${playerId}-${new Date().getTime()}.csv`;
+    const csvContent = convertToCSV(gameLog);
+    
+    await uploadToGoogleDrive(filename, csvContent);
+    showNotification(`✅ Uploaded to Google Drive: ${filename}`, "success");
+  } catch (err) {
     console.error(err);
-    alert("Upload failed ❌");
+    showNotification("Export failed ❌", "error");
+  } finally {
+    exportBtn.disabled = false;
   }
 };
+
+// ===== INIT =====
+function startInit() {
+  // Wait for gapi to be ready
+  if (window.gapi && window.gapi.auth2 !== undefined) {
+    initGoogleAuth();
+  } else {
+    setTimeout(startInit, 100);
+  }
+}
+
+window.addEventListener("load", startInit);

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>BuyWord Game</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://accounts.google.com/gapi/client:platform.js"></script>
 </head>
 <body>
 
@@ -11,7 +12,9 @@
   <input id="player-name-input" placeholder="Your Name" />
   <input id="player-class-input" placeholder="Class (ex: DATA101)" />
   <button id="start-game-btn">Start Game</button>
-  <button id="exportBtn">📤 Export Game Log</button>
+  <button id="authBtn" style="display:none;">🔐 Sign in to Google Drive</button>
+  <button id="exportBtn" style="display:none;">📤 Export Game Log</button>
+  <span id="auth-status"></span>
 </section>
 
 <header class="top-bar">
