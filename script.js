@@ -6,6 +6,12 @@ const SCOPES = "https://www.googleapis.com/auth/drive.file";
 let tokenClient;
 let accessToken = null;
 
+// Global callback for gapi onload
+window.onGapiLoad = function() {
+  console.log("✅ Google GAPI Loaded");
+  initGoogleAuth();
+};
+
 // ===== DOM =====
 const ownedTilesDiv = document.getElementById("owned-tiles");
 const wildTilesDiv = document.getElementById("wild-tiles");
@@ -324,20 +330,5 @@ exportBtn.onclick = async () => {
 };
 
 // ===== INIT =====
-function startInit() {
-  // Wait for gapi to be available
-  if (window.gapi) {
-    initGoogleAuth();
-    console.log("✅ Google API Initialized");
-  } else {
-    console.log("⏳ Waiting for Google API...");
-    setTimeout(startInit, 200);
-  }
-}
-
-// Start init when page loads
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", startInit);
-} else {
-  startInit();
-}
+// Init is called via onGapiLoad callback when Google API is ready
+// No need to manually call it
