@@ -325,12 +325,19 @@ exportBtn.onclick = async () => {
 
 // ===== INIT =====
 function startInit() {
-  // Wait for gapi to be ready
-  if (window.gapi && window.gapi.auth2 !== undefined) {
+  // Wait for gapi to be available
+  if (window.gapi) {
     initGoogleAuth();
+    console.log("✅ Google API Initialized");
   } else {
-    setTimeout(startInit, 100);
+    console.log("⏳ Waiting for Google API...");
+    setTimeout(startInit, 200);
   }
 }
 
-window.addEventListener("load", startInit);
+// Start init when page loads
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", startInit);
+} else {
+  startInit();
+}
