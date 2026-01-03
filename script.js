@@ -1,15 +1,92 @@
 // ===== GOOGLE API CONFIG =====
 const CLIENT_ID = "695131078144-vbsin0iu3otnn9mfjsgv1bb9fhavjbsr.apps.googleusercontent.com";
 const DRIVE_FOLDER_ID = "1IXPNyfVbjR5jxxf5GwtZlBVy3h1H2PAY";
-const SCOPES = "https://www.googleapis.com/auth/drive.file";
 
-let tokenClient;
 let accessToken = null;
 
-// Global callback for gapi onload
-window.onGapiLoad = function() {
-  console.log("✅ Google GAPI Loaded");
-  initGoogleAuth();
+// Global variable to store the access token
+let gsiAccessToken = null;
+
+// Callback when user signs in with Google Identity Services
+function handleCredentialResponse(response) {
+  console.log("✅ User signed in with Google ID!");
+  // Store the ID token
+  const idToken = response.credential;
+  
+  // Decode to get email
+  const base64Url = idToken.split('.')[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+  
+  const decoded = JSON.parse(jsonPayload);
+  console.log("Signed in as:", decoded.email);
+  
+  if (authStatus) authStatus.textContent = "✓ Google Drive Connected";
+  if (authBtn) authBtn.textContent = "🔓 Sign out";
+  if (exportBtn) exportBtn.style.display = "block";
+  
+  // Now request Drive access via OAuth
+  requestDriveAccess();
+}
+
+// Request Drive access using OAuth 2.0
+function requestDriveAccess() {
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    redirect_uri: window.location.origin + window.location.pathname,
+    response_type: 'token',
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    state: 'buyword_game'
+  });
+  
+  // Open OAuth popup
+  const authWindow = window.open(
+    'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString(),
+    'googleDriveAuth',
+    'width=500,height=600'
+  );
+  
+  // Listen for the response
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.access_token) {
+      gsiAccessToken = event.data.access_token;
+      console.log("✅ Got Drive access token!");
+      showNotification("✅ Drive access granted!", "success");
+    }
+  });
+}
+
+// Handle sign out
+function handleSignOut() {
+  gsiAccessToken = null;
+  if (authStatus) authStatus.textContent = "";
+  if (authBtn) authBtn.textContent = "🔐 Sign in to Google Drive";
+  if (exportBtn) exportBtn.style.display = "none";
+  console.log("✅ Signed out");
+}
+
+// Initialize Google Sign-In when it loads
+window.onload = function() {
+  if (window.google && window.google.accounts) {
+    google.accounts.id.initialize({
+      client_id: CLIENT_ID,
+      callback: handleCredentialResponse
+    });
+    
+    // Render the sign-in button in authBtn
+    if (authBtn) {
+      google.accounts.id.renderButton(authBtn, {
+        theme: "outline",
+        size: "large"
+      });
+    }
+    
+    console.log("✅ Google Sign-In Ready");
+  } else {
+    console.error("Google Identity Services not loaded");
+  }
 };
 
 // ===== DOM =====
@@ -58,46 +135,14 @@ function showNotification(message, type = "success") {
   setTimeout(() => notif.classList.remove("show"), 3000);
 }
 
-// ===== GOOGLE AUTH INIT =====
-function initGoogleAuth() {
-  gapi.load("client", async () => {
-    try {
-      await gapi.client.init({
-        clientId: CLIENT_ID,
-        scope: SCOPES,
-      });
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: handleAuthCallback,
-      });
-      if (authBtn) authBtn.style.display = "block";
-      console.log("✅ Google Drive Auth Ready");
-    } catch (err) {
-      console.error("Auth init failed:", err);
-    }
-  });
-}
-
-function handleAuthCallback(resp) {
-  if (resp.error !== undefined) {
-    throw resp;
-  }
-  accessToken = resp.access_token;
-  if (authStatus) authStatus.textContent = "✓ Google Drive Connected";
-  if (authBtn) authBtn.textContent = "🔓 Disconnect Google Drive";
-  if (exportBtn) exportBtn.style.display = "block";
-}
-
 if (authBtn) {
   authBtn.onclick = () => {
     if (accessToken) {
-      accessToken = null;
-      if (authStatus) authStatus.textContent = "";
-      authBtn.textContent = "🔐 Sign in to Google Drive";
-      if (exportBtn) exportBtn.style.display = "none";
+      handleSignOut();
+      google.accounts.id.disableAutoSelect();
     } else {
-      if (tokenClient) tokenClient.requestAccessToken({ prompt: "consent" });
+      // Button is handled by Google's renderButton, just show sign in
+      google.accounts.id.prompt();
     }
   };
 }
@@ -145,6 +190,11 @@ function convertToCSV(data) {
 // ===== GOOGLE DRIVE UPLOAD =====
 async function uploadToGoogleDrive(filename, csvContent) {
   try {
+    if (!gsiAccessToken) {
+      showNotification("Please authorize Drive access first", "error");
+      throw new Error("No Drive access token");
+    }
+    
     const blob = new Blob([csvContent], { type: "text/csv" });
     const formData = new FormData();
     formData.append("metadata", new Blob([JSON.stringify({
@@ -158,12 +208,15 @@ async function uploadToGoogleDrive(filename, csvContent) {
       "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true",
       {
         method: "POST",
-        headers: new Headers({ Authorization: `Bearer ${accessToken}` }),
+        headers: new Headers({ Authorization: `Bearer ${gsiAccessToken}` }),
         body: formData
       }
     );
 
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      const error = await res.text();
+      throw new Error(error);
+    }
     return await res.json();
   } catch (err) {
     console.error("Upload error:", err);
@@ -313,6 +366,11 @@ renderLetterPriceGrid();
 // ===== EXPORT TO GOOGLE DRIVE =====
 exportBtn.onclick = async () => {
   if (!gameLog.length) return showNotification("No game data to export", "error");
+  
+  if (!accessToken) {
+    showNotification("Please sign in to Google Drive first", "error");
+    return;
+  }
 
   try {
     exportBtn.disabled = true;
@@ -330,5 +388,4 @@ exportBtn.onclick = async () => {
 };
 
 // ===== INIT =====
-// Init is called via onGapiLoad callback when Google API is ready
-// No need to manually call it
+// Google Sign-In is initialized in window.onload at the top of the script
