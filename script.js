@@ -47,23 +47,18 @@ function logAction(action, details={}) {
 }
 
 // ================= DROPBOX TOKEN HANDLING =================
-// Get access token from URL hash (after OAuth redirect)
-function getDropboxTokenFromURL() {
-  if(!window.location.hash) return null;
-  const hash = window.location.hash.substring(1);
-  const params = new URLSearchParams(hash);
-  return params.get("access_token");
-}
-
-// On page load, check for token
-dropboxToken = getDropboxTokenFromURL();
-if(dropboxToken) {
-  authStatus.textContent = "Dropbox Connected!";
-  exportBtn.style.display = "inline-block";
-  authBtn.dataset.connected = "true";
-  // Clean the URL
-  window.history.replaceState(null,null,window.location.pathname);
-}
+// Receive token from popup
+window.addEventListener("message", (event) => {
+  if(event.origin !== window.location.origin) return;
+  if(event.data.dropboxToken){
+    dropboxToken = event.data.dropboxToken;
+    authStatus.textContent = "Dropbox Connected!";
+    exportBtn.style.display = "inline-block";
+    authBtn.dataset.connected = "true";
+    showNotification("Dropbox connected!", "success");
+    logAction("dropbox_connect", {playerId});
+  }
+});
 
 // ================= LETTER COSTS / DICE =================
 const letterCost = {A:1,B:3,C:3,D:2,E:1,F:4,G:2,H:4,I:1,J:8,K:5,L:1,M:3,N:1,O:1,P:3,Q:10,R:1,S:1,T:1,U:1,V:4,W:4,X:8,Y:4,Z:10};
