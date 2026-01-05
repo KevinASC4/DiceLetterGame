@@ -258,7 +258,6 @@ authBtn.onclick = () => {
     logAction("dropbox_connect_attempt");
   }
 };
-
 // ================= EXPORT TO DROPBOX AS CSV =================
 exportBtn.style.display = "inline-block"; // always show
 exportBtn.onclick = async () => {
@@ -286,13 +285,23 @@ exportBtn.onclick = async () => {
   const dbx = new Dropbox.Dropbox({ accessToken: dropboxToken });
 
   try {
+    // Ensure folder "CSVs" exists
+    await dbx.filesCreateFolderV2({ path: "/Test_CSVs", autorename: false }).catch(e => {
+      // Ignore error if folder already exists
+      if (e.error && e.error.path && e.error.path[".tag"] !== "conflict") {
+        throw e;
+      }
+    });
+
+    // Upload the CSV into that folder
     await dbx.filesUpload({
-      path: `/${fileName}`, // root folder
+      path: `/CSVs/${fileName}`,
       contents: csvContent,
       mode: { ".tag": "overwrite" }
     });
-    showNotification(`Game log uploaded as CSV to Dropbox root!`);
-    logAction("dropbox_export", { playerId, path: `/${fileName}` });
+
+    showNotification(`Game log uploaded as CSV to Dropbox /CSVs folder!`);
+    logAction("dropbox_export", { playerId, path: `/CSVs/${fileName}` });
   } catch (err) {
     console.error(err);
     showNotification("Dropbox export failed", "error");
