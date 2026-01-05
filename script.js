@@ -289,7 +289,7 @@ exportBtn.onclick = async () => {
       headers: {
         "Authorization": `Bearer ${dropboxToken}`,
         "Dropbox-API-Arg": JSON.stringify({
-          path: `/Apps/BuyWord/${fileName}`,
+          path: `/${fileName}`,
           mode: "overwrite",
           mute: true
         }),
