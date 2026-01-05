@@ -28,28 +28,12 @@ let timer = null;
 let playerId = "";
 let gameLog = [];
 let gameStarted = false;
+let dropboxToken = null; // store OAuth token automatically
 
 rollBtn.disabled = true;
 buyBtn.disabled = true;
 
-// Letter costs
-const letterCost = {
-  A:1,B:3,C:3,D:2,E:1,F:4,G:2,H:4,
-  I:1,J:8,K:5,L:1,M:3,N:1,O:1,P:3,
-  Q:10,R:1,S:1,T:1,U:1,V:4,W:4,X:8,Y:4,Z:10
-};
-
-// Dice face images
-const diceFaces = {
-  1:"assets/dice/32x/front-side-1.png",
-  2:"assets/dice/32x/front-2.png",
-  3:"assets/dice/32x/front-3.png",
-  4:"assets/dice/32x/front-side-4.png",
-  5:"assets/dice/32x/front-5.png",
-  6:"assets/dice/32x/side-6.png"
-};
-
-// ================= FUNCTIONS =================
+// ================= HELPERS =================
 function showNotification(msg,type="success") {
   const n = document.getElementById("notification");
   n.textContent = msg;
@@ -62,224 +46,250 @@ function logAction(action, details={}) {
   gameLog.push({timestamp, action, ...details});
 }
 
-function createTile(letter,cost) {
-  const d = document.createElement("div");
-  d.className = "tile";
-  d.innerHTML = `<div class="tile-letter">${letter}</div><div class="tile-number">${cost}</div>`;
+// ================= DROPBOX TOKEN HANDLING =================
+// Get access token from URL hash (after OAuth redirect)
+function getDropboxTokenFromURL() {
+  if(!window.location.hash) return null;
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  return params.get("access_token");
+}
+
+// On page load, check for token
+dropboxToken = getDropboxTokenFromURL();
+if(dropboxToken) {
+  authStatus.textContent = "Dropbox Connected!";
+  exportBtn.style.display = "inline-block";
+  authBtn.dataset.connected = "true";
+  // Clean the URL
+  window.history.replaceState(null,null,window.location.pathname);
+}
+
+// ================= LETTER COSTS / DICE =================
+const letterCost = {A:1,B:3,C:3,D:2,E:1,F:4,G:2,H:4,I:1,J:8,K:5,L:1,M:3,N:1,O:1,P:3,Q:10,R:1,S:1,T:1,U:1,V:4,W:4,X:8,Y:4,Z:10};
+const diceFaces = {
+  1:"assets/dice/32x/front-side-1.png",
+  2:"assets/dice/32x/front-2.png",
+  3:"assets/dice/32x/front-3.png",
+  4:"assets/dice/32x/front-side-4.png",
+  5:"assets/dice/32x/front-5.png",
+  6:"assets/dice/32x/side-6.png"
+};
+
+// ================= TILE / RENDER FUNCTIONS =================
+function createTile(letter,cost){
+  const d=document.createElement("div");
+  d.className="tile";
+  d.innerHTML=`<div class="tile-letter">${letter}</div><div class="tile-number">${cost}</div>`;
   return d;
 }
 
-function renderRoll() {
-  const rollDiv = document.getElementById("current-roll");
-  rollDiv.innerHTML = "";
-  let total = 0;
+function renderRoll(){
+  const rollDiv=document.getElementById("current-roll");
+  rollDiv.innerHTML="";
+  let total=0;
   currentRoll.forEach(l=>{
-    total += letterCost[l];
-    rollDiv.appendChild(createTile(l, letterCost[l]));
+    total+=letterCost[l];
+    rollDiv.appendChild(createTile(l,letterCost[l]));
   });
-  priceDisplay.textContent = total ? `Total Price: $${total}` : "";
+  priceDisplay.textContent=total?`Total Price: $${total}`:"";
 }
 
-function renderOwned() {
+function renderOwned(){
   ownedTilesDiv.innerHTML="";
   playerTiles.forEach((l,i)=>{
-    const t = createTile(l, letterCost[l]);
-    t.draggable = true;
-    t.ondragstart = e => e.dataTransfer.setData("text/plain", i);
+    const t=createTile(l,letterCost[l]);
+    t.draggable=true;
+    t.ondragstart=e=>e.dataTransfer.setData("text/plain",i);
     ownedTilesDiv.appendChild(t);
   });
   renderWild();
 }
 
-function renderWild() {
+function renderWild(){
   wildTilesDiv.innerHTML="";
   wildTiles.forEach((_,i)=>{
-    const t = createTile("*",1);
+    const t=createTile("*",1);
     t.classList.add("wild-tile");
-    t.onclick = ()=>{
-      const l = prompt("Wildcard letter A-Z");
+    t.onclick=()=>{
+      const l=prompt("Wildcard letter A-Z");
       if(!/^[A-Z]$/i.test(l)) return;
       playerTiles.push(l.toUpperCase());
       wildTiles.splice(i,1);
       renderOwned();
       showNotification(`Wildcard used: ${l.toUpperCase()}`);
-      logAction("use_wildcard", {letter: l.toUpperCase(), coins, playerTiles: [...playerTiles]});
+      logAction("use_wildcard",{letter:l.toUpperCase(),coins,playerTiles:[...playerTiles]});
     };
     wildTilesDiv.appendChild(t);
   });
 }
 
-function updateWordScore() {
+function updateWordScore(){
   let sum=0;
   [...wordBuilder.children].forEach(t=>{
-    sum += Number(t.querySelector(".tile-number").textContent);
+    sum+=Number(t.querySelector(".tile-number").textContent);
   });
-  potentialWinSpan.textContent = sum*sum;
+  potentialWinSpan.textContent=sum*sum;
 }
 
 // ================= START GAME =================
-startBtn.onclick = () => {
-  if (!nameInput.value || !classInput.value) return alert("Enter name & class");
-  playerId = `${nameInput.value}-${classInput.value}`;
-  playerIdSpan.textContent = playerId;
-  startTime = new Date();
-  timeStartSpan.textContent = startTime.toLocaleTimeString();
+startBtn.onclick=()=>{
+  if(!nameInput.value||!classInput.value)return alert("Enter name & class");
+  playerId=`${nameInput.value}-${classInput.value}`;
+  playerIdSpan.textContent=playerId;
+  startTime=new Date();
+  timeStartSpan.textContent=startTime.toLocaleTimeString();
 
-  timer && clearInterval(timer);
-  timer = setInterval(() => {
-    const s = Math.floor((Date.now()-startTime)/1000);
-    timeElapsedSpan.textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+  timer&&clearInterval(timer);
+  timer=setInterval(()=>{
+    const s=Math.floor((Date.now()-startTime)/1000);
+    timeElapsedSpan.textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
   },1000);
 
-  gameStarted = true;
-  rollBtn.disabled = false;
-  buyBtn.disabled = false;
+  gameStarted=true;
+  rollBtn.disabled=false;
+  buyBtn.disabled=false;
   showNotification("Game Started!");
-  logAction("start_game", {playerId, coins});
+  logAction("start_game",{playerId,coins});
 };
 
 // ================= ROLL DICE =================
-rollBtn.onclick = () => {
-  if(!gameStarted) return;
+rollBtn.onclick=()=>{
+  if(!gameStarted)return;
 
-  diceImg.style.display = "block";
+  diceImg.style.display="block";
   diceImg.classList.remove("shake");
 
-  const allDiceImgs = Object.values(diceFaces);
-  let elapsed = 0;
-  const interval = 50;
-  const duration = 500;
+  const allDiceImgs=Object.values(diceFaces);
+  let elapsed=0;
+  const interval=50;
+  const duration=500;
 
-  const anim = setInterval(() => {
-    diceImg.src = allDiceImgs[Math.floor(Math.random()*allDiceImgs.length)];
+  const anim=setInterval(()=>{
+    diceImg.src=allDiceImgs[Math.floor(Math.random()*allDiceImgs.length)];
     diceImg.classList.add("shake");
-    elapsed += interval;
-    if(elapsed >= duration) {
+    elapsed+=interval;
+    if(elapsed>=duration){
       clearInterval(anim);
-      const rollNumber = Math.floor(Math.random()*6)+1;
-      diceImg.src = diceFaces[rollNumber];
-      currentRoll = Array.from({length: rollNumber},()=>Object.keys(letterCost)[Math.floor(Math.random()*26)]);
+      const rollNumber=Math.floor(Math.random()*6)+1;
+      diceImg.src=diceFaces[rollNumber];
+      currentRoll=Array.from({length:rollNumber},()=>Object.keys(letterCost)[Math.floor(Math.random()*26)]);
       renderRoll();
       showNotification(`Rolled ${rollNumber} letters!`);
-      logAction("roll_letters", {rollNumber, letters: [...currentRoll]});
+      logAction("roll_letters",{rollNumber,letters:[...currentRoll]});
     }
-  }, interval);
+  },interval);
 };
 
 // ================= BUY LETTERS =================
-buyBtn.onclick = () => {
-  if(!gameStarted || !currentRoll.length) return;
-  const cost = currentRoll.reduce((s,l)=>s+letterCost[l],0);
-  if(coins<cost) return alert("Not enough coins");
-  coins -= cost;
-  document.getElementById("coins").textContent = coins;
+buyBtn.onclick=()=>{
+  if(!gameStarted||!currentRoll.length)return;
+  const cost=currentRoll.reduce((s,l)=>s+letterCost[l],0);
+  if(coins<cost)return alert("Not enough coins");
+  coins-=cost;
+  document.getElementById("coins").textContent=coins;
   playerTiles.push(...currentRoll);
-  logAction("buy_letters", {boughtLetters: [...currentRoll], cost, coins, playerTiles: [...playerTiles]});
+  logAction("buy_letters",{boughtLetters:[...currentRoll],cost,coins,playerTiles:[...playerTiles]});
   currentRoll=[];
   renderOwned();
   renderRoll();
 };
 
 // ================= DRAG & DROP =================
-wordBuilder.ondragover = e => e.preventDefault();
-wordBuilder.ondrop = e => {
+wordBuilder.ondragover=e=>e.preventDefault();
+wordBuilder.ondrop=e=>{
   e.preventDefault();
-  const i = e.dataTransfer.getData("text/plain");
-  if(i==="") return;
-  const l = playerTiles.splice(i,1)[0];
-  const t = createTile(l, letterCost[l]);
-  t.onclick = ()=>{
+  const i=e.dataTransfer.getData("text/plain");
+  if(i==="")return;
+  const l=playerTiles.splice(i,1)[0];
+  const t=createTile(l,letterCost[l]);
+  t.onclick=()=>{
     playerTiles.push(l);
     wordBuilder.removeChild(t);
     renderOwned();
     updateWordScore();
-    logAction("remove_tile_from_word", {letter: l, playerTiles: [...playerTiles]});
+    logAction("remove_tile_from_word",{letter:l,playerTiles:[...playerTiles]});
   };
   wordBuilder.appendChild(t);
   renderOwned();
   updateWordScore();
-  logAction("add_tile_to_word", {letter: l, playerTiles: [...playerTiles]});
+  logAction("add_tile_to_word",{letter:l,playerTiles:[...playerTiles]});
 };
 
 // ================= SELL WORD =================
-checkWordBtn.onclick = () => {
-  const wordTiles = [...wordBuilder.children];
-  if(!wordTiles.length) return alert("Place letters in word builder first!");
-  let sum = 0;
-  const word = [];
+checkWordBtn.onclick=()=>{
+  const wordTiles=[...wordBuilder.children];
+  if(!wordTiles.length)return alert("Place letters in word builder first!");
+  let sum=0;
+  const word=[];
   wordTiles.forEach(t=>{
-    const letter = t.querySelector(".tile-letter").textContent;
-    const value = Number(t.querySelector(".tile-number").textContent);
-    sum += value;
+    const letter=t.querySelector(".tile-letter").textContent;
+    const value=Number(t.querySelector(".tile-number").textContent);
+    sum+=value;
     word.push(letter);
   });
-  const score = sum*sum;
-  coins += score;
-  document.getElementById("coins").textContent = coins;
-
-  // Remove tiles from word builder
+  const score=sum*sum;
+  coins+=score;
+  document.getElementById("coins").textContent=coins;
   wordBuilder.innerHTML="";
   updateWordScore();
-  logAction("sell_word", {word: word.join(""), score, coins, remainingTiles: [...playerTiles]});
+  logAction("sell_word",{word:word.join(""),score,coins,remainingTiles:[...playerTiles]});
   showNotification(`Sold word "${word.join("")}" for $${score}`);
   renderOwned();
 };
 
 // ================= INITIAL LETTER GRID =================
 (function(){
-  const g = document.getElementById("letter-price-grid");
+  const g=document.getElementById("letter-price-grid");
   g.innerHTML="";
   Object.entries(letterCost).forEach(([l,c])=>g.appendChild(createTile(l,c)));
 })();
 
-// ================= DROPBOX EXPORT =================
-authBtn.onclick = () => {
-  const DROPBOX_APP_KEY = "zd45feuaxe5sgzq";
-  const redirectUri = "https://kevinasc4.github.io/DiceLetterGame/";
+// ================= DROPBOX =================
+authBtn.onclick=()=>{
+  const DROPBOX_APP_KEY="zd45feuaxe5sgzq";
+  const redirectUri="https://kevinasc4.github.io/DiceLetterGame/";
 
-  if(authBtn.dataset.connected==="true") {
-    authBtn.dataset.connected = "false";
-    authStatus.textContent = "";
-    exportBtn.style.display = "none";
-    showNotification("Dropbox disconnected", "error");
+  if(authBtn.dataset.connected==="true"){
+    authBtn.dataset.connected="false";
+    authStatus.textContent="";
+    exportBtn.style.display="none";
+    showNotification("Dropbox disconnected","error");
     logAction("dropbox_disconnect");
   } else {
-    const url = `https://www.dropbox.com/oauth2/authorize?client_id=${DROPBOX_APP_KEY}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const url=`https://www.dropbox.com/oauth2/authorize?client_id=${DROPBOX_APP_KEY}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}`;
     window.open(url,"_blank","width=600,height=600");
-    showNotification("Connect Dropbox in popup window", "success");
+    showNotification("Connect Dropbox in popup window","success");
     logAction("dropbox_connect_attempt");
   }
 };
 
-// Export log to Dropbox (requires token handling)
-exportBtn.onclick = () => {
-  const token = prompt("Enter Dropbox Access Token:");
-  if(!token) return alert("Access token required");
-  const blob = new Blob([JSON.stringify(gameLog,null,2)], {type: "application/json"});
-  const formData = new FormData();
-  formData.append("file", blob, `${playerId || "game"}_log.json`);
-
-  fetch("https://content.dropboxapi.com/2/files/upload", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Dropbox-API-Arg": JSON.stringify({
-        path: `/${playerId || "game"}_log.json`,
-        mode: "overwrite",
-        mute: true
+// ================= EXPORT TO DROPBOX =================
+exportBtn.style.display="inline-block"; // always show
+exportBtn.onclick=()=>{
+  if(!dropboxToken) return alert("Sign in to Dropbox first!");
+  const blob=new Blob([JSON.stringify(gameLog,null,2)],{type:"application/json"});
+  fetch("https://content.dropboxapi.com/2/files/upload",{
+    method:"POST",
+    headers:{
+      "Authorization":`Bearer ${dropboxToken}`,
+      "Dropbox-API-Arg":JSON.stringify({
+        path:`/${playerId || "game"}_log.json`,
+        mode:"overwrite",
+        mute:true
       }),
-      "Content-Type": "application/octet-stream"
+      "Content-Type":"application/octet-stream"
     },
-    body: blob
+    body:blob
   }).then(res=>{
     if(res.ok){
       showNotification("Game log exported to Dropbox!");
-      logAction("dropbox_export", {playerId});
+      logAction("dropbox_export",{playerId});
     } else {
-      showNotification("Dropbox export failed", "error");
+      showNotification("Dropbox export failed","error");
     }
   }).catch(err=>{
     console.error(err);
-    showNotification("Dropbox export error", "error");
+    showNotification("Dropbox export error","error");
   });
 };
