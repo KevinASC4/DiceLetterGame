@@ -12,9 +12,8 @@
   <input id="player-class-input" placeholder="Class (ex: DATA101)" />
   <button id="start-game-btn">Start Game</button>
 
-  <!-- Dropbox placeholders (logic handled in JS) -->
-  <button id="authBtn">🔐 Sign in to Dropbox</button>
-  <button id="exportBtn" >📤 Export Game Log</button>
+  <!-- Dropbox buttons removed since no login -->
+  <button id="exportBtn">📤 Export Game Log</button>
   <span id="auth-status"></span>
 </section>
 
@@ -75,19 +74,9 @@
 
 <div id="notification" class="notification"></div>
 
-<!-- ================= DROPBOX REDIRECT SCRIPT ================= -->
-<script>
-  // This runs if this page is opened by the Dropbox OAuth popup
-  if(window.location.hash.includes("access_token") && window.opener){
-    const params = new URLSearchParams(window.location.hash.slice(1));
-    const token = params.get("access_token");
-    window.opener.postMessage({dropboxToken: token}, window.location.origin);
-    window.close();
-  }
-</script>
-
 <!-- ===== Dropbox SDK ===== -->
 <script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
+<!-- Your game logic JS -->
 <script src="script.js"></script>
 </body>
 </html>
