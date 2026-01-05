@@ -16,6 +16,7 @@ const timeElapsedSpan = document.getElementById("time-elapsed");
 const authBtn = document.getElementById("authBtn");
 const exportBtn = document.getElementById("exportBtn");
 const authStatus = document.getElementById("auth-status");
+const checkWordBtn = document.getElementById("check-word-btn");
 
 // ================= GAME STATE =================
 let coins = 200;
@@ -28,7 +29,6 @@ let playerId = "";
 let gameLog = [];
 let gameStarted = false;
 
-// Disable roll/buy buttons until game starts
 rollBtn.disabled = true;
 buyBtn.disabled = true;
 
@@ -44,8 +44,8 @@ const diceFaces = {
   1:"assets/dice/32x/front-side-1.png",
   2:"assets/dice/32x/front-2.png",
   3:"assets/dice/32x/front-3.png",
-  4:"assets/dice/32x/front-5.png",
-  5:"assets/dice/32x/front-6.png",
+  4:"assets/dice/32x/front-side-4.png",
+  5:"assets/dice/32x/front-5.png",
   6:"assets/dice/32x/side-6.png"
 };
 
@@ -55,6 +55,11 @@ function showNotification(msg,type="success") {
   n.textContent = msg;
   n.className = `notification show ${type}`;
   setTimeout(()=>n.classList.remove("show"),3000);
+}
+
+function logAction(action, details={}) {
+  const timestamp = new Date().toISOString();
+  gameLog.push({timestamp, action, ...details});
 }
 
 function createTile(letter,cost) {
@@ -98,6 +103,7 @@ function renderWild() {
       wildTiles.splice(i,1);
       renderOwned();
       showNotification(`Wildcard used: ${l.toUpperCase()}`);
+      logAction("use_wildcard", {letter: l.toUpperCase(), coins, playerTiles: [...playerTiles]});
     };
     wildTilesDiv.appendChild(t);
   });
@@ -129,6 +135,7 @@ startBtn.onclick = () => {
   rollBtn.disabled = false;
   buyBtn.disabled = false;
   showNotification("Game Started!");
+  logAction("start_game", {playerId, coins});
 };
 
 // ================= ROLL DICE =================
@@ -154,6 +161,7 @@ rollBtn.onclick = () => {
       currentRoll = Array.from({length: rollNumber},()=>Object.keys(letterCost)[Math.floor(Math.random()*26)]);
       renderRoll();
       showNotification(`Rolled ${rollNumber} letters!`);
+      logAction("roll_letters", {rollNumber, letters: [...currentRoll]});
     }
   }, interval);
 };
@@ -166,6 +174,7 @@ buyBtn.onclick = () => {
   coins -= cost;
   document.getElementById("coins").textContent = coins;
   playerTiles.push(...currentRoll);
+  logAction("buy_letters", {boughtLetters: [...currentRoll], cost, coins, playerTiles: [...playerTiles]});
   currentRoll=[];
   renderOwned();
   renderRoll();
@@ -184,10 +193,36 @@ wordBuilder.ondrop = e => {
     wordBuilder.removeChild(t);
     renderOwned();
     updateWordScore();
+    logAction("remove_tile_from_word", {letter: l, playerTiles: [...playerTiles]});
   };
   wordBuilder.appendChild(t);
   renderOwned();
   updateWordScore();
+  logAction("add_tile_to_word", {letter: l, playerTiles: [...playerTiles]});
+};
+
+// ================= SELL WORD =================
+checkWordBtn.onclick = () => {
+  const wordTiles = [...wordBuilder.children];
+  if(!wordTiles.length) return alert("Place letters in word builder first!");
+  let sum = 0;
+  const word = [];
+  wordTiles.forEach(t=>{
+    const letter = t.querySelector(".tile-letter").textContent;
+    const value = Number(t.querySelector(".tile-number").textContent);
+    sum += value;
+    word.push(letter);
+  });
+  const score = sum*sum;
+  coins += score;
+  document.getElementById("coins").textContent = coins;
+
+  // Remove tiles from word builder
+  wordBuilder.innerHTML="";
+  updateWordScore();
+  logAction("sell_word", {word: word.join(""), score, coins, remainingTiles: [...playerTiles]});
+  showNotification(`Sold word "${word.join("")}" for $${score}`);
+  renderOwned();
 };
 
 // ================= INITIAL LETTER GRID =================
@@ -197,8 +232,7 @@ wordBuilder.ondrop = e => {
   Object.entries(letterCost).forEach(([l,c])=>g.appendChild(createTile(l,c)));
 })();
 
-// ================= DROPBOX BUTTON FIX =================
-// Open Dropbox auth in new window so it works on GitHub Pages
+// ================= DROPBOX EXPORT =================
 authBtn.onclick = () => {
   const DROPBOX_APP_KEY = "zd45feuaxe5sgzq";
   const redirectUri = window.location.origin + window.location.pathname;
@@ -208,9 +242,44 @@ authBtn.onclick = () => {
     authStatus.textContent = "";
     exportBtn.style.display = "none";
     showNotification("Dropbox disconnected", "error");
+    logAction("dropbox_disconnect");
   } else {
     const url = `https://www.dropbox.com/oauth2/authorize?client_id=${DROPBOX_APP_KEY}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}`;
     window.open(url,"_blank","width=600,height=600");
     showNotification("Connect Dropbox in popup window", "success");
+    logAction("dropbox_connect_attempt");
   }
+};
+
+// Export log to Dropbox (requires token handling)
+exportBtn.onclick = () => {
+  const token = prompt("Enter Dropbox Access Token:");
+  if(!token) return alert("Access token required");
+  const blob = new Blob([JSON.stringify(gameLog,null,2)], {type: "application/json"});
+  const formData = new FormData();
+  formData.append("file", blob, `${playerId || "game"}_log.json`);
+
+  fetch("https://content.dropboxapi.com/2/files/upload", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Dropbox-API-Arg": JSON.stringify({
+        path: `/${playerId || "game"}_log.json`,
+        mode: "overwrite",
+        mute: true
+      }),
+      "Content-Type": "application/octet-stream"
+    },
+    body: blob
+  }).then(res=>{
+    if(res.ok){
+      showNotification("Game log exported to Dropbox!");
+      logAction("dropbox_export", {playerId});
+    } else {
+      showNotification("Dropbox export failed", "error");
+    }
+  }).catch(err=>{
+    console.error(err);
+    showNotification("Dropbox export error", "error");
+  });
 };
