@@ -11,6 +11,8 @@
   <input id="player-name-input" placeholder="Your Name" />
   <input id="player-class-input" placeholder="Class (ex: DATA101)" />
   <button id="start-game-btn">Start Game</button>
+
+  <!-- Dropbox placeholders (logic handled in JS) -->
   <button id="authBtn">🔐 Sign in to Dropbox</button>
   <button id="exportBtn" style="display:none;">📤 Export Game Log</button>
   <span id="auth-status"></span>
@@ -31,7 +33,44 @@
 </header>
 
 <main class="main-grid">
-  <!-- UNCHANGED GAME UI -->
+
+  <!-- LETTER PRICE GRID -->
+  <section class="price-grid">
+    <h3>Letter Prices</h3>
+    <div id="letter-price-grid" class="alphabet-grid"></div>
+  </section>
+
+  <!-- DICE / OFFER SECTION -->
+  <section class="offer-section">
+    <div class="dice-container">
+      <img id="dice-img" src="assets/dice/32x/front-2.png" alt="Dice" />
+    </div>
+    <div id="current-roll" class="tile-row"></div>
+    <div id="total-price"></div>
+
+    <button id="roll-dice">Roll Dice</button>
+    <button id="buy-tiles-btn">Buy Letters</button>
+  </section>
+
+  <!-- PLAYER AREA -->
+  <section class="player-section">
+    <h3>Letters Possessed</h3>
+    <div id="owned-tiles" class="tile-row"></div>
+
+    <h4>Wildcards</h4>
+    <div id="wild-tiles" class="tile-row"></div>
+
+    <h3>Word Builder</h3>
+    <div id="word-builder" class="tile-row drop-zone"></div>
+
+    <div>
+      You will win:
+      <strong>$<span id="potential-win">0</span></strong>
+    </div>
+
+    <button id="check-word-btn">Sell Word</button>
+  </section>
+
 </main>
 
 <div id="notification" class="notification"></div>

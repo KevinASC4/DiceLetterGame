@@ -90,15 +90,8 @@ body { margin:0; font-family: Arial; background:#cfdde3; }
   cursor:pointer;
 }
 
-.tile-letter {
-  font-size:20px;
-  font-weight:bold;
-}
-
-.tile-number {
-  font-size:12px;
-  color:#555;
-}
+.tile-letter { font-size:20px; font-weight:bold; }
+.tile-number { font-size:12px; color:#555; }
 
 .tile-row {
   display:flex;
@@ -107,16 +100,9 @@ body { margin:0; font-family: Arial; background:#cfdde3; }
   justify-content:center;
 }
 
-.wild-tile {
-  background:#fff6a8;
-  border-style:dashed;
-}
+.wild-tile { background:#fff6a8; border-style:dashed; }
 
-.drop-zone {
-  min-height:60px;
-  border:2px dashed #333;
-  padding:5px;
-}
+.drop-zone { min-height:60px; border:2px dashed #333; padding:5px; }
 
 button {
   cursor:pointer;
@@ -128,14 +114,8 @@ button {
   margin-top:5px;
 }
 
-button:hover {
-  background:#333;
-}
-
-button:disabled {
-  background:#999;
-  cursor:not-allowed;
-}
+button:hover { background:#333; }
+button:disabled { background:#999; cursor:not-allowed; }
 
 .notification {
   position:fixed;
@@ -155,50 +135,24 @@ button:disabled {
   animation: slideUp 0.3s ease-out;
 }
 
-.notification.success {
-  background:#4caf50;
-}
-
-.notification.error {
-  background:#f44336;
-}
+.notification.success { background:#4caf50; }
+.notification.error { background:#f44336; }
 
 @keyframes slideUp {
-  from {
-    opacity:0;
-    transform:translateX(-50%) translateY(20px);
-  }
-  to {
-    opacity:1;
-    transform:translateX(-50%) translateY(0);
-  }
+  from { opacity:0; transform:translateX(-50%) translateY(20px); }
+  to { opacity:1; transform:translateX(-50%) translateY(0); }
 }
 
-.instructions-header {
-  background:#8fa9b4;
-  padding:20px;
-  color:white;
+.dice-container {
   display:flex;
-  justify-content:space-between;
-  align-items:center;
+  justify-content:center;
+  margin-bottom:10px;
 }
 
-.back-link {
-  background:#222;
-  color:white;
-  padding:6px 10px;
-  border-radius:5px;
-  text-decoration:none;
+#dice-img {
+  width:64px;
+  height:64px;
+  transition: transform 0.2s ease-in-out;
 }
 
-.instructions {
-  max-width:800px;
-  margin:20px auto;
-  background:#e6eef3;
-  padding:20px;
-  border-radius:6px;
-}
-
-.instructions ul {
-  line-height:1.8;
-}
+#dice-img.shake { transform: rotate(20deg); }
