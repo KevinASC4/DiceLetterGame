@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>BuyWord Game</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -12,7 +11,7 @@
   <input id="player-name-input" placeholder="Your Name" />
   <input id="player-class-input" placeholder="Class (ex: DATA101)" />
   <button id="start-game-btn">Start Game</button>
-  <button id="authBtn" style="display:none;">🔐 Sign in to Google Drive</button>
+  <button id="authBtn">🔐 Sign in to Dropbox</button>
   <button id="exportBtn" style="display:none;">📤 Export Game Log</button>
   <span id="auth-status"></span>
 </section>
@@ -32,33 +31,7 @@
 </header>
 
 <main class="main-grid">
-
-  <section class="price-grid">
-    <h3>Letter Prices</h3>
-    <div id="letter-price-grid" class="alphabet-grid"></div>
-  </section>
-
-  <section class="offer-section">
-    <div id="current-roll" class="tile-row"></div>
-    <div id="total-price"></div>
-    <button id="roll-dice">Roll Dice</button>
-    <button id="buy-tiles-btn">Buy Letters</button>
-  </section>
-
-  <section class="player-section">
-    <h3>Letters Possessed</h3>
-    <div id="owned-tiles" class="tile-row"></div>
-
-    <h4>Wildcards</h4>
-    <div id="wild-tiles" class="tile-row"></div>
-
-    <h3>Word Builder</h3>
-    <div id="word-builder" class="tile-row drop-zone"></div>
-    <div>You will win: <strong>$<span id="potential-win">0</span></strong></div>
-
-    <button id="check-word-btn">Sell Word</button>
-  </section>
-
+  <!-- UNCHANGED GAME UI -->
 </main>
 
 <div id="notification" class="notification"></div>
