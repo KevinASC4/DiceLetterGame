@@ -259,32 +259,53 @@ authBtn.onclick=()=>{
   }
 };
 
-// ================= EXPORT TO DROPBOX =================
+// ================= EXPORT TO DROPBOX AS CSV =================
 exportBtn.style.display="inline-block"; // always show
-exportBtn.onclick=()=>{
-  if(!dropboxToken) return alert("Sign in to Dropbox first!");
-  const blob=new Blob([JSON.stringify(gameLog,null,2)],{type:"application/json"});
-  fetch("https://content.dropboxapi.com/2/files/upload",{
-    method:"POST",
-    headers:{
-      "Authorization":`Bearer ${dropboxToken}`,
-      "Dropbox-API-Arg":JSON.stringify({
-        path:`/${playerId || "game"}_log.json`,
-        mode:"overwrite",
-        mute:true
-      }),
-      "Content-Type":"application/octet-stream"
-    },
-    body:blob
-  }).then(res=>{
-    if(res.ok){
-      showNotification("Game log exported to Dropbox!");
-      logAction("dropbox_export",{playerId});
+exportBtn.onclick = async () => {
+  if (!dropboxToken) return alert("Sign in to Dropbox first!");
+  if (!gameLog.length) return alert("No game data to export!");
+
+  const fileName = `${playerId || "game"}_log.csv`;
+  const keys = Object.keys(gameLog[0]);
+
+  // Convert log to CSV, flatten arrays as pipe-separated
+  const csvRows = [
+    keys.join(","), // header row
+    ...gameLog.map(obj =>
+      keys.map(k => {
+        let val = obj[k];
+        if (Array.isArray(val)) val = val.join("|"); // flatten arrays
+        return `"${val}"`; // wrap everything in quotes
+      }).join(",")
+    )
+  ];
+
+  const csvContent = csvRows.join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv" });
+
+  try {
+    const res = await fetch("https://content.dropboxapi.com/2/files/upload", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${dropboxToken}`,
+        "Dropbox-API-Arg": JSON.stringify({
+          path: `/Apps/DiceLetterGame/${fileName}`,
+          mode: "overwrite",
+          mute: true
+        }),
+        "Content-Type": "application/octet-stream"
+      },
+      body: blob
+    });
+
+    if (res.ok) {
+      showNotification(`Game log uploaded as CSV! Check Apps/DiceLetterGame/${fileName}`);
+      logAction("dropbox_export", { playerId, path: `Apps/DiceLetterGame/${fileName}` });
     } else {
-      showNotification("Dropbox export failed","error");
+      showNotification("Dropbox export failed", "error");
     }
-  }).catch(err=>{
+  } catch (err) {
     console.error(err);
-    showNotification("Dropbox export error","error");
-  });
+    showNotification("Dropbox export error", "error");
+  }
 };
