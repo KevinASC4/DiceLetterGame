@@ -75,6 +75,17 @@
 
 <div id="notification" class="notification"></div>
 
+<!-- ================= DROPBOX REDIRECT SCRIPT ================= -->
+<script>
+  // This runs if this page is opened by the Dropbox OAuth popup
+  if(window.location.hash.includes("access_token") && window.opener){
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const token = params.get("access_token");
+    window.opener.postMessage({dropboxToken: token}, window.location.origin);
+    window.close();
+  }
+</script>
+
 <script src="script.js"></script>
 </body>
 </html>
