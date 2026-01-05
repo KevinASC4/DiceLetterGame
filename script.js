@@ -235,7 +235,7 @@ checkWordBtn.onclick = () => {
 // ================= DROPBOX EXPORT =================
 authBtn.onclick = () => {
   const DROPBOX_APP_KEY = "zd45feuaxe5sgzq";
-  const redirectUri = window.location.origin + window.location.pathname;
+  const redirectUri = "https://kevinasc4.github.io/DiceLetterGame/";
 
   if(authBtn.dataset.connected==="true") {
     authBtn.dataset.connected = "false";
