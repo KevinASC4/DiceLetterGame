@@ -13,6 +13,9 @@ const startBtn = document.getElementById("start-game-btn");
 const playerIdSpan = document.getElementById("player-id");
 const timeStartSpan = document.getElementById("time-start");
 const timeElapsedSpan = document.getElementById("time-elapsed");
+const authBtn = document.getElementById("authBtn");
+const exportBtn = document.getElementById("exportBtn");
+const authStatus = document.getElementById("auth-status");
 
 // ================= GAME STATE =================
 let coins = 200;
@@ -77,7 +80,7 @@ function renderOwned() {
   playerTiles.forEach((l,i)=>{
     const t = createTile(l, letterCost[l]);
     t.draggable = true;
-    t.ondragstart = e => e.dataTransfer.setData("i", i);
+    t.ondragstart = e => e.dataTransfer.setData("text/plain", i);
     ownedTilesDiv.appendChild(t);
   });
   renderWild();
@@ -94,6 +97,7 @@ function renderWild() {
       playerTiles.push(l.toUpperCase());
       wildTiles.splice(i,1);
       renderOwned();
+      showNotification(`Wildcard used: ${l.toUpperCase()}`);
     };
     wildTilesDiv.appendChild(t);
   });
@@ -124,38 +128,35 @@ startBtn.onclick = () => {
   gameStarted = true;
   rollBtn.disabled = false;
   buyBtn.disabled = false;
+  showNotification("Game Started!");
 };
 
 // ================= ROLL DICE =================
 rollBtn.onclick = () => {
   if(!gameStarted) return;
 
-  // Make dice visible and reset shake
   diceImg.style.display = "block";
   diceImg.classList.remove("shake");
 
-  // Animate dice for 500ms
   const allDiceImgs = Object.values(diceFaces);
   let elapsed = 0;
   const interval = 50;
   const duration = 500;
 
   const anim = setInterval(() => {
-    diceImg.src = allDiceImgs[Math.floor(Math.random() * allDiceImgs.length)];
-    diceImg.classList.add("shake"); // optional: visual shake
+    diceImg.src = allDiceImgs[Math.floor(Math.random()*allDiceImgs.length)];
+    diceImg.classList.add("shake");
     elapsed += interval;
-    if (elapsed >= duration) {
+    if(elapsed >= duration) {
       clearInterval(anim);
-      const rollNumber = Math.floor(Math.random() * 6) + 1;
-      diceImg.src = diceFaces[rollNumber]; // final face
-      currentRoll = Array.from({ length: rollNumber }, () =>
-        Object.keys(letterCost)[Math.floor(Math.random() * 26)]
-      );
+      const rollNumber = Math.floor(Math.random()*6)+1;
+      diceImg.src = diceFaces[rollNumber];
+      currentRoll = Array.from({length: rollNumber},()=>Object.keys(letterCost)[Math.floor(Math.random()*26)]);
       renderRoll();
+      showNotification(`Rolled ${rollNumber} letters!`);
     }
   }, interval);
 };
-
 
 // ================= BUY LETTERS =================
 buyBtn.onclick = () => {
@@ -170,9 +171,46 @@ buyBtn.onclick = () => {
   renderRoll();
 };
 
+// ================= DRAG & DROP =================
+wordBuilder.ondragover = e => e.preventDefault();
+wordBuilder.ondrop = e => {
+  e.preventDefault();
+  const i = e.dataTransfer.getData("text/plain");
+  if(i==="") return;
+  const l = playerTiles.splice(i,1)[0];
+  const t = createTile(l, letterCost[l]);
+  t.onclick = ()=>{
+    playerTiles.push(l);
+    wordBuilder.removeChild(t);
+    renderOwned();
+    updateWordScore();
+  };
+  wordBuilder.appendChild(t);
+  renderOwned();
+  updateWordScore();
+};
+
 // ================= INITIAL LETTER GRID =================
 (function(){
   const g = document.getElementById("letter-price-grid");
   g.innerHTML="";
   Object.entries(letterCost).forEach(([l,c])=>g.appendChild(createTile(l,c)));
 })();
+
+// ================= DROPBOX BUTTON FIX =================
+// Open Dropbox auth in new window so it works on GitHub Pages
+authBtn.onclick = () => {
+  const DROPBOX_APP_KEY = "zd45feuaxe5sgzq";
+  const redirectUri = window.location.origin + window.location.pathname;
+
+  if(authBtn.dataset.connected==="true") {
+    authBtn.dataset.connected = "false";
+    authStatus.textContent = "";
+    exportBtn.style.display = "none";
+    showNotification("Dropbox disconnected", "error");
+  } else {
+    const url = `https://www.dropbox.com/oauth2/authorize?client_id=${DROPBOX_APP_KEY}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    window.open(url,"_blank","width=600,height=600");
+    showNotification("Connect Dropbox in popup window", "success");
+  }
+};
