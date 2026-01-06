@@ -38,14 +38,23 @@ function showNotification(msg, type = "success") {
   setTimeout(() => n.classList.remove("show"), 3000);
 }
 
-function logAction(action, details = {}) {
-  const timestamp = new Date().toISOString();
-  gameLog.push({ timestamp, action, ...details });
+/**
+ * Centralized logger — ALWAYS use this
+ */
+function logAction(action, meta = {}) {
+  gameLog.push({
+    timestamp: new Date().toISOString(),
+    action,
+    playerId,
+    coins,
+    ...meta
+  });
 }
 
 // ================= LETTER COSTS / DICE =================
 const letterCost = { 
-  A:1,B:3,C:3,D:2,E:1,F:4,G:2,H:4,I:1,J:8,K:5,L:1,M:3,N:1,O:1,P:3,Q:10,R:1,S:1,T:1,U:1,V:4,W:4,X:8,Y:4,Z:10 
+  A:1,B:3,C:3,D:2,E:1,F:4,G:2,H:4,I:1,J:8,K:5,L:1,M:3,
+  N:1,O:1,P:3,Q:10,R:1,S:1,T:1,U:1,V:4,W:4,X:8,Y:4,Z:10 
 };
 
 const diceFaces = {
@@ -57,13 +66,16 @@ const diceFaces = {
   6:"assets/dice/32x/side-6.png"
 };
 
-// ================= TILE / RENDER FUNCTIONS =================
+// ================= TILE / RENDER =================
 function createTile(letter, cost = null) {
-  const tileCost = (letter === "*" || cost === 1) ? 1 : cost ?? letterCost[letter] ?? 1;
+  const tileCost = (letter === "*" || cost === 1) ? 1 : cost ?? letterCost[letter];
   const d = document.createElement("div");
   d.className = "tile";
-  if(letter === "*") d.classList.add("wild-tile");
-  d.innerHTML = `<div class="tile-letter">${letter}</div><div class="tile-number">${tileCost}</div>`;
+  if (letter === "*") d.classList.add("wild-tile");
+  d.innerHTML = `
+    <div class="tile-letter">${letter}</div>
+    <div class="tile-number">${tileCost}</div>
+  `;
   return d;
 }
 
@@ -71,12 +83,13 @@ function renderRoll() {
   const rollDiv = document.getElementById("current-roll");
   rollDiv.innerHTML = "";
   let total = 0;
-  currentRoll.forEach(tile => {
-    const letter = tile.letter;
-    const cost = tile.cost ?? (letter === "*" ? 1 : letterCost[letter]);
+
+  currentRoll.forEach(t => {
+    const cost = t.cost ?? letterCost[t.letter];
     total += cost;
-    rollDiv.appendChild(createTile(letter, cost));
+    rollDiv.appendChild(createTile(t.letter, cost));
   });
+
   priceDisplay.textContent = total ? `Total Price: $${total}` : "";
 }
 
@@ -95,15 +108,13 @@ function renderWild() {
   wildTilesDiv.innerHTML = "";
   wildTiles.forEach((_, i) => {
     const t = createTile("*", 1);
-    t.classList.add("wild-tile");
     t.onclick = () => {
       const l = prompt("Wildcard letter A-Z");
       if (!/^[A-Z]$/i.test(l)) return;
       playerTiles.push({ letter: l.toUpperCase(), cost: 1 });
       wildTiles.splice(i, 1);
       renderOwned();
-      showNotification(`Wildcard used: ${l.toUpperCase()}`);
-      logAction("use_wildcard", { letter: l.toUpperCase(), coins, playerTiles: [...playerTiles] });
+      logAction("use_wildcard", { letter: l.toUpperCase() });
     };
     wildTilesDiv.appendChild(t);
   });
@@ -120,8 +131,10 @@ function updateWordScore() {
 // ================= START GAME =================
 startBtn.onclick = () => {
   if (!nameInput.value || !classInput.value) return alert("Enter name & class");
+
   playerId = `${nameInput.value}-${classInput.value}`;
   playerIdSpan.textContent = playerId;
+
   startTime = new Date();
   timeStartSpan.textContent = startTime.toLocaleTimeString();
 
@@ -134,50 +147,51 @@ startBtn.onclick = () => {
   gameStarted = true;
   rollBtn.disabled = false;
   buyBtn.disabled = false;
+
+  logAction("start_game");
   showNotification("Game Started!");
-  logAction("start_game", { playerId, coins });
 };
 
 // ================= ROLL DICE =================
 rollBtn.onclick = () => {
   if (!gameStarted) return;
 
-  diceImg.style.display = "block";
-  diceImg.classList.remove("shake");
+  const rollNumber = Math.floor(Math.random() * 6) + 1;
+  diceImg.src = diceFaces[rollNumber];
+  currentRoll = Array.from({ length: rollNumber }, () => ({
+    letter: Object.keys(letterCost)[Math.floor(Math.random() * 26)]
+  }));
 
-  const allDiceImgs = Object.values(diceFaces);
-  let elapsed = 0;
-  const interval = 50;
-  const duration = 500;
-
-  const anim = setInterval(() => {
-    diceImg.src = allDiceImgs[Math.floor(Math.random()*allDiceImgs.length)];
-    diceImg.classList.add("shake");
-    elapsed += interval;
-    if (elapsed >= duration) {
-      clearInterval(anim);
-      const rollNumber = Math.floor(Math.random()*6)+1;
-      diceImg.src = diceFaces[rollNumber];
-      currentRoll = Array.from({ length: rollNumber }, () => ({ letter: Object.keys(letterCost)[Math.floor(Math.random()*26)], cost: null }));
-      renderRoll();
-      showNotification(`Rolled ${rollNumber} letters!`);
-      logAction("roll_letters", { rollNumber, letters: currentRoll.map(t=>t.letter) });
-    }
-  }, interval);
+  renderRoll();
+  logAction("roll_letters", {
+    rollNumber,
+    letters: currentRoll.map(t => t.letter)
+  });
 };
 
 // ================= BUY LETTERS =================
 buyBtn.onclick = () => {
-  if (!gameStarted || !currentRoll.length) return;
-  const cost = currentRoll.reduce((s, t) => s + (t.cost ?? letterCost[t.letter]), 0);
+  if (!currentRoll.length) return;
+
+  const cost = currentRoll.reduce((s, t) => s + letterCost[t.letter], 0);
   if (coins < cost) return alert("Not enough coins");
+
   coins -= cost;
   document.getElementById("coins").textContent = coins;
-  playerTiles.push(...currentRoll.map(t => ({ letter: t.letter, cost: t.cost ?? letterCost[t.letter] })));
-  logAction("buy_letters", { boughtLetters: currentRoll.map(t=>t.letter), cost, coins, playerTiles: [...playerTiles] });
+
+  playerTiles.push(...currentRoll.map(t => ({
+    letter: t.letter,
+    cost: letterCost[t.letter]
+  })));
+
+  logAction("buy_letters", {
+    letters: currentRoll.map(t => t.letter),
+    cost
+  });
+
   currentRoll = [];
-  renderOwned();
   renderRoll();
+  renderOwned();
 };
 
 // ================= DRAG & DROP =================
@@ -186,109 +200,83 @@ wordBuilder.ondrop = e => {
   e.preventDefault();
   const i = e.dataTransfer.getData("text/plain");
   if (i === "") return;
+
   const tileObj = playerTiles.splice(i, 1)[0];
   const t = createTile(tileObj.letter, tileObj.cost);
-  if(tileObj.letter === "*" || tileObj.cost === 1) t.classList.add("wild-tile");
 
   t.onclick = () => {
     playerTiles.push(tileObj);
     wordBuilder.removeChild(t);
     renderOwned();
     updateWordScore();
-    logAction("remove_tile_from_word", { letter: tileObj.letter, playerTiles:[...playerTiles] });
+    logAction("remove_tile_from_word", { letter: tileObj.letter });
   };
 
   wordBuilder.appendChild(t);
   renderOwned();
   updateWordScore();
-  logAction("add_tile_to_word", { letter: tileObj.letter, playerTiles:[...playerTiles] });
+  logAction("add_tile_to_word", { letter: tileObj.letter });
 };
 
-// ================= CHECK WORD / SELL WITH DICTIONARY API =================
+// ================= CHECK WORD =================
 checkWordBtn.onclick = async () => {
-  const wordTiles = [...wordBuilder.children];
-  if (!wordTiles.length) return alert("Place letters in word builder first!");
-  
-  let sum = 0;
-  const word = [];
-  
-  wordTiles.forEach(t => {
-    const letter = t.querySelector(".tile-letter").textContent;
-    const value = Number(t.querySelector(".tile-number").textContent);
-    sum += value;
-    word.push(letter);
-  });
+  if (!wordBuilder.children.length) return;
 
-  const wordStr = word.join("").toLowerCase();
+  const letters = [...wordBuilder.children].map(t =>
+    t.querySelector(".tile-letter").textContent
+  );
+  const word = letters.join("").toLowerCase();
+
+  const sum = [...wordBuilder.children]
+    .map(t => Number(t.querySelector(".tile-number").textContent))
+    .reduce((a,b) => a + b, 0);
 
   try {
-    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${wordStr}`);
+    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
     if (!res.ok) {
-      showNotification(`Invalid word: "${wordStr}"`, "error");
-      logAction("wrong_word", { word: wordStr, playerTiles: [...playerTiles] });
-      return;
+      logAction("invalid_word", { word });
+      return showNotification("Invalid word", "error");
     }
 
     const score = sum * sum;
     coins += score;
     document.getElementById("coins").textContent = coins;
+
     wordBuilder.innerHTML = "";
     updateWordScore();
-    
-    logAction("sell_word", { word: wordStr, score, coins, remainingTiles: [...playerTiles] });
-    showNotification(`Sold word "${wordStr}" for $${score}`);
     renderOwned();
 
-  } catch (err) {
-    console.error(err);
-    showNotification("Dictionary API error", "error");
+    logAction("sell_word", { word, score });
+    showNotification(`Sold "${word}" for $${score}`);
+  } catch {
+    showNotification("Dictionary error", "error");
   }
 };
 
-// ================= INITIAL LETTER GRID =================
-(function(){
-  const g = document.getElementById("letter-price-grid");
-  g.innerHTML = "";
-  Object.entries(letterCost).forEach(([l,c])=>g.appendChild(createTile(l,c)));
-})();
-
-// ================= EXPORT / SERVER UPLOAD =================
-exportBtn.style.display = "inline-block";
+// ================= EXPORT TO DROPBOX =================
 exportBtn.onclick = async () => {
-  if (!gameLog.length) return alert("No game data to export!");
+  if (!gameLog.length) return alert("No data");
 
-  const fileName = `${playerId || "game"}_log.csv`;
-  const keys = Object.keys(gameLog[0]);
-  const csvRows = [
+  const fileName = `${playerId}_log.csv`;
+  const keys = [...new Set(gameLog.flatMap(o => Object.keys(o)))];
+
+  const csv = [
     keys.join(","),
-    ...gameLog.map(obj =>
-      keys.map(k => {
-        let val = obj[k];
-        if (Array.isArray(val)) val = val.join("|");
-        return `"${val}"`;
-      }).join(",")
+    ...gameLog.map(o =>
+      keys.map(k => `"${o[k] ?? ""}"`).join(",")
     )
-  ];
-  const csvContent = csvRows.join("\n");
+  ].join("\n");
 
-  try {
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileName, csvContent })
-    });
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fileName, csvContent: csv })
+  });
 
-    if (res.ok) {
-      showNotification(`Game log uploaded to Dropbox!`);
-      logAction("dropbox_export", { playerId, path: `/BuyWord-Bentley/${fileName}` });
-    } else {
-      const errText = await res.text();
-      console.error(errText);
-      showNotification("Dropbox upload failed", "error");
-    }
-  } catch (err) {
-    console.error(err);
-    showNotification("Server error", "error");
+  if (res.ok) {
+    logAction("dropbox_export", { fileName });
+    showNotification("Uploaded to Dropbox!");
+  } else {
+    showNotification("Upload failed", "error");
   }
 };
-
