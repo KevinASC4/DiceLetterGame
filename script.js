@@ -31,6 +31,16 @@ rollBtn.disabled = true;
 buyBtn.disabled = true;
 
 // ================= HELPERS =================
+function renderLetterPriceGrid() {
+  const grid = document.getElementById("letter-price-grid");
+  if (!grid) return;
+
+  grid.innerHTML = "";
+  Object.entries(letterCost).forEach(([letter, cost]) => {
+    grid.appendChild(createTile(letter, cost));
+  });
+}
+
 function showNotification(msg, type = "success") {
   const n = document.getElementById("notification");
   n.textContent = msg;
@@ -280,3 +290,4 @@ exportBtn.onclick = async () => {
     showNotification("Upload failed", "error");
   }
 };
+renderLetterPriceGrid();
